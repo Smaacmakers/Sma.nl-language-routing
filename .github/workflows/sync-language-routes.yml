@@ -1,0 +1,41 @@
+name: Sync language routes
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+permissions:
+  contents: read
+concurrency:
+  group: smaac-route-sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      CF_ACCOUNT_ID: 'f8674f307263ac3415e508445ca6bed8'
+      CF_KV_NAMESPACE_ID: '241ea5cb4692493bbe3cf6765681f740'
+      CF_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Build and validate current sitemap
+        run: python3 sync.py --output routes.json
+      - name: Test mapping and routing
+        run: |
+          python3 test-sync.py
+          node test-worker.mjs
+      - name: Publish validated snapshot to preview KV
+        if: ${{ env.CF_API_TOKEN != '' }}
+        run: python3 -c 'import json, sync; sync.publish(json.load(open("routes.json")))'
+      - name: Explain missing publication credential
+        if: ${{ env.CF_API_TOKEN == '' }}
+        run: echo 'Validation only. Add CF_API_TOKEN in repository Actions secrets to enable KV publication.'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: language-routes
+          path: |
+            routes.json
+            routes.csv
