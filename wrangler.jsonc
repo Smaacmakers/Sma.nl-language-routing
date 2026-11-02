@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "smaac-language-router-preview",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-11-02",
+  "workers_dev": true,
+  "vars": {
+    "DRY_RUN": "true"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "ROUTES",
+      "id": "241ea5cb4692493bbe3cf6765681f740"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
